@@ -1,6 +1,6 @@
 {
-  "name": "Spilleklokke - Countdown Timer",
-  "short_name": "Spilleklokke",
+  "name": "Spillklokke - Countdown Timer",
+  "short_name": "Spillklokke",
   "description": "Colorful countdown timer for children",
   "start_url": "/",
   "display": "fullscreen",
