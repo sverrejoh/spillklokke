@@ -207,6 +207,36 @@
             display: block;
         }
 
+        .fullscreen-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 12px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 3;
+            transition: background 0.3s, opacity 0.3s;
+            opacity: 0.5;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            opacity: 1;
+        }
+
+        .fullscreen-button.hide {
+            display: none;
+        }
+
         .completed-message {
             display: none;
             position: fixed;
@@ -272,6 +302,10 @@
     </div>
 
     <button class="reset-button" id="resetButton" onclick="resetTimer()">↻ Reset</button>
+
+    <button class="fullscreen-button" id="fullscreenButton" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+        <span id="fullscreenIcon">⛶</span>
+    </button>
 
     <div class="completed-message" id="completedMessage">🎉 TIME'S UP! 🎉</div>
 
@@ -409,6 +443,29 @@
             totalSeconds = 0;
             originalTotalSeconds = 0;
         }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Update fullscreen icon when fullscreen state changes
+        document.addEventListener('fullscreenchange', function() {
+            if (document.fullscreenElement) {
+                // In fullscreen - show exit fullscreen icon
+                document.getElementById('fullscreenIcon').textContent = '⛶';
+            } else {
+                // Not in fullscreen - show enter fullscreen icon
+                document.getElementById('fullscreenIcon').textContent = '⛶';
+            }
+        });
 
         // Allow Enter key to start timer
         document.addEventListener('keypress', function(e) {
