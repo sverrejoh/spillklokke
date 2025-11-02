@@ -196,7 +196,7 @@
         }
 
         .start-button {
-            background: linear-gradient(135deg, #FF8C42 0%, #4A90E2 100%);
+            background: #FF8C42;
             color: white;
             border: none;
             padding: 20px 60px;
@@ -598,7 +598,8 @@
                 return;
             }
 
-            // Show timer display
+            // Hide setup container and show timer display
+            document.getElementById('setupContainer').classList.add('hidden');
             document.getElementById('timerDisplay').classList.add('active');
             document.getElementById('resetButton').classList.add('active');
 
@@ -667,7 +668,11 @@
             document.getElementById('timerDisplay').classList.remove('active');
             document.getElementById('waitingDisplay').classList.remove('active');
             document.getElementById('resetButton').classList.remove('active');
-            document.getElementById('completedMessage').classList.remove('active');
+
+            // Reset completed message and its animation
+            const completedMessage = document.getElementById('completedMessage');
+            completedMessage.classList.remove('active');
+            completedMessage.style.animation = '';
 
             // Reset delayed start section
             document.getElementById('delayedStartInputs').classList.remove('active');
