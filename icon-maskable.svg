@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Solid background for maskable icon -->
+  <rect width="512" height="512" fill="#FF8C42" rx="80"/>
+
+  <!-- Clock face (centered, with safe zone padding) -->
+  <circle cx="256" cy="256" r="180" fill="#FFFFFF" stroke="#4A90E2" stroke-width="16"/>
+
+  <!-- Clock center -->
+  <circle cx="256" cy="256" r="12" fill="#4A90E2"/>
+
+  <!-- Hour markers -->
+  <circle cx="256" cy="100" r="12" fill="#4A90E2"/>
+  <circle cx="256" cy="412" r="12" fill="#4A90E2"/>
+  <circle cx="100" cy="256" r="12" fill="#4A90E2"/>
+  <circle cx="412" cy="256" r="12" fill="#4A90E2"/>
+
+  <!-- Hour hand (pointing to 10) -->
+  <line x1="256" y1="256" x2="200" y2="180" stroke="#4A90E2" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Minute hand (pointing to 2) -->
+  <line x1="256" y1="256" x2="312" y2="156" stroke="#FF6B6B" stroke-width="12" stroke-linecap="round"/>
+</svg>
