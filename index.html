@@ -185,6 +185,31 @@
             display: block;
         }
 
+        .waiting-display {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .waiting-display.active {
+            display: flex;
+        }
+
+        .current-time {
+            font-size: 12vw;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .waiting-message {
+            font-size: 4vw;
+            color: white;
+            text-align: center;
+            text-shadow: 0 3px 15px rgba(0, 0, 0, 0.3);
+        }
+
         .setup-container.hidden {
             display: none;
         }
@@ -301,10 +326,22 @@
                 </div>
             </div>
 
+            <div class="time-input-group" style="margin-top: 20px;">
+                <div class="time-input">
+                    <label>Start Time (optional)</label>
+                    <input type="time" id="startTime" placeholder="Now">
+                </div>
+            </div>
+
             <button class="start-button" onclick="startTimer()">START! 🚀</button>
         </div>
 
         <div class="timer-display" id="timerDisplay">00:00:00</div>
+
+        <div class="waiting-display" id="waitingDisplay">
+            <div class="current-time" id="currentTime">00:00:00</div>
+            <div class="waiting-message" id="waitingMessage">Timer starts at 00:00</div>
+        </div>
     </div>
 
     <button class="reset-button" id="resetButton" onclick="resetTimer()">↻ Reset</button>
@@ -320,6 +357,14 @@
         let totalSeconds = 0;
         let originalTotalSeconds = 0;
         let currentMode = 'countdown';
+        let waitingForStart = false;
+        let startDateTime = null;
+        let endDateTime = null;
+        let use24Hour = true;
+
+        // Detect 12h/24h format from browser locale
+        const timeFormat = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' }).resolvedOptions();
+        use24Hour = timeFormat.hour12 === false;
 
         function selectMode(mode) {
             currentMode = mode;
@@ -346,13 +391,56 @@
             }
         }
 
+        function formatTime(date) {
+            const options = {
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: !use24Hour
+            };
+            return new Intl.DateTimeFormat(navigator.language, options).format(date);
+        }
+
+        function formatTimeShort(date) {
+            const options = {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: !use24Hour
+            };
+            return new Intl.DateTimeFormat(navigator.language, options).format(date);
+        }
+
         function startTimer() {
+            const now = new Date();
+            const startTimeInput = document.getElementById('startTime').value;
+
+            // Parse start time if provided
+            if (startTimeInput) {
+                const [hours, minutes] = startTimeInput.split(':').map(Number);
+                startDateTime = new Date();
+                startDateTime.setHours(hours, minutes, 0, 0);
+
+                // If start time is before now, assume it's tomorrow
+                if (startDateTime <= now) {
+                    startDateTime.setDate(startDateTime.getDate() + 1);
+                }
+            } else {
+                startDateTime = now;
+            }
+
+            // Calculate end time
             if (currentMode === 'countdown') {
                 const hours = parseInt(document.getElementById('hours').value) || 0;
                 const minutes = parseInt(document.getElementById('minutes').value) || 0;
                 const seconds = parseInt(document.getElementById('seconds').value) || 0;
 
-                totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                const durationSeconds = hours * 3600 + minutes * 60 + seconds;
+                if (durationSeconds <= 0) {
+                    alert('Please set a time greater than 0!');
+                    return;
+                }
+
+                endDateTime = new Date(startDateTime.getTime() + durationSeconds * 1000);
             } else {
                 // Time of day mode
                 const targetTime = document.getElementById('targetTime').value;
@@ -362,29 +450,73 @@
                 }
 
                 const [hours, minutes] = targetTime.split(':').map(Number);
-                const now = new Date();
-                const target = new Date();
-                target.setHours(hours, minutes, 0, 0);
+                endDateTime = new Date();
+                endDateTime.setHours(hours, minutes, 0, 0);
 
-                // If target is before now, assume it's tomorrow
-                if (target <= now) {
-                    target.setDate(target.getDate() + 1);
+                // If target is before start time, assume it's tomorrow
+                if (endDateTime <= startDateTime) {
+                    endDateTime.setDate(endDateTime.getDate() + 1);
                 }
-
-                totalSeconds = Math.floor((target - now) / 1000);
             }
 
+            // Check if we need to wait for start time
+            if (startDateTime > now) {
+                waitingForStart = true;
+                showWaitingState();
+            } else {
+                waitingForStart = false;
+                startCountdown();
+            }
+        }
+
+        function showWaitingState() {
+            // Hide setup, show waiting display
+            document.getElementById('setupContainer').classList.add('hidden');
+            document.getElementById('waitingDisplay').classList.add('active');
+            document.getElementById('resetButton').classList.add('active');
+
+            // Set background to red
+            document.body.style.background = '#FF6B6B';
+
+            // Update waiting message
+            document.getElementById('waitingMessage').textContent =
+                `Timer starts at ${formatTimeShort(startDateTime)}`;
+
+            // Start clock update
+            countdownInterval = setInterval(() => {
+                const now = new Date();
+                document.getElementById('currentTime').textContent = formatTime(now);
+
+                // Check if it's time to start
+                if (now >= startDateTime) {
+                    clearInterval(countdownInterval);
+                    waitingForStart = false;
+                    document.getElementById('waitingDisplay').classList.remove('active');
+                    startCountdown();
+                }
+            }, 1000);
+
+            // Update immediately
+            document.getElementById('currentTime').textContent = formatTime(new Date());
+        }
+
+        function startCountdown() {
+            const now = new Date();
+            totalSeconds = Math.floor((endDateTime - now) / 1000);
             originalTotalSeconds = totalSeconds;
 
             if (totalSeconds <= 0) {
-                alert('Please set a time greater than 0!');
+                alert('End time has already passed!');
+                resetTimer();
                 return;
             }
 
-            // Hide setup, show timer
-            document.getElementById('setupContainer').classList.add('hidden');
+            // Show timer display
             document.getElementById('timerDisplay').classList.add('active');
             document.getElementById('resetButton').classList.add('active');
+
+            // Reset background to blue
+            document.body.style.background = '#4A90E2';
 
             // Set background fill transition duration
             const backgroundFill = document.getElementById('backgroundFill');
@@ -440,14 +572,21 @@
             backgroundFill.style.transitionDuration = '0s';
             backgroundFill.style.width = '0%';
 
+            // Reset background color
+            document.body.style.background = '#4A90E2';
+
             // Reset display
             document.getElementById('setupContainer').classList.remove('hidden');
             document.getElementById('timerDisplay').classList.remove('active');
+            document.getElementById('waitingDisplay').classList.remove('active');
             document.getElementById('resetButton').classList.remove('active');
             document.getElementById('completedMessage').classList.remove('active');
 
             totalSeconds = 0;
             originalTotalSeconds = 0;
+            waitingForStart = false;
+            startDateTime = null;
+            endDateTime = null;
         }
 
         function toggleFullscreen() {
