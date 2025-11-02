@@ -598,7 +598,8 @@
                 return;
             }
 
-            // Show timer display
+            // Hide setup container and show timer display
+            document.getElementById('setupContainer').classList.add('hidden');
             document.getElementById('timerDisplay').classList.add('active');
             document.getElementById('resetButton').classList.add('active');
 
