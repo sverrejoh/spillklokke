@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        body {
+            background: #4A90E2;
+        }
+
+        .background-fill {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: #FF6B6B;
+            transition: width linear;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .setup-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .setup-container h1 {
+            color: #FF8C42;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .timer-mode-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-button {
+            background: white;
+            color: #FF8C42;
+            border: 3px solid #FF8C42;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .mode-button:hover {
+            background: #f0f0f0;
+        }
+
+        .mode-button.active {
+            background: #FF8C42;
+            color: white;
+        }
+
+        .time-input-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .time-of-day-input {
+            display: none;
+        }
+
+        .time-of-day-input.active {
+            display: flex;
+        }
+
+        .time-of-day-input input[type="time"] {
+            width: 200px;
+            height: 60px;
+            font-size: 1.8em;
+            text-align: center;
+            border: 3px solid #FF8C42;
+            border-radius: 10px;
+            outline: none;
+            padding: 10px;
+        }
+
+        .time-of-day-input input[type="time"]:focus {
+            border-color: #4A90E2;
+        }
+
+        .time-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-input label {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .time-input input {
+            width: 80px;
+            height: 60px;
+            font-size: 2em;
+            text-align: center;
+            border: 3px solid #FF8C42;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .time-input input:focus {
+            border-color: #4A90E2;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, #FF8C42 0%, #4A90E2 100%);
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            font-size: 1.5em;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 140, 66, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 25px rgba(255, 140, 66, 0.6);
+        }
+
+        .start-button:active {
+            transform: translateY(0);
+        }
+
+        .timer-display {
+            display: none;
+            font-size: 15vw;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        .timer-display.active {
+            display: block;
+        }
+
+        .setup-container.hidden {
+            display: none;
+        }
+
+        .reset-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 3;
+            display: none;
+            transition: background 0.3s;
+        }
+
+        .reset-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .reset-button.active {
+            display: block;
+        }
+
+        .completed-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8vw;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+            z-index: 4;
+            animation: bounce 1s infinite;
+        }
+
+        .completed-message.active {
+            display: block;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-fill" id="backgroundFill"></div>
+
+    <div class="content" id="content">
+        <div class="setup-container" id="setupContainer">
+            <h1>⏰ Set Timer</h1>
+
+            <div class="timer-mode-buttons">
+                <button class="mode-button active" onclick="selectMode('countdown')">⏱️ Countdown</button>
+                <button class="mode-button" onclick="selectMode('timeofday')">🕐 Time of Day</button>
+            </div>
+
+            <div class="time-input-group" id="countdownInput">
+                <div class="time-input">
+                    <label>Hours</label>
+                    <input type="number" id="hours" min="0" max="23" value="0">
+                </div>
+                <div class="time-input">
+                    <label>Minutes</label>
+                    <input type="number" id="minutes" min="0" max="59" value="5">
+                </div>
+                <div class="time-input">
+                    <label>Seconds</label>
+                    <input type="number" id="seconds" min="0" max="59" value="0">
+                </div>
+            </div>
+
+            <div class="time-input-group time-of-day-input" id="timeOfDayInput">
+                <div class="time-input">
+                    <label>Target Time</label>
+                    <input type="time" id="targetTime">
+                </div>
+            </div>
+
+            <button class="start-button" onclick="startTimer()">START! 🚀</button>
+        </div>
+
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+    </div>
+
+    <button class="reset-button" id="resetButton" onclick="resetTimer()">↻ Reset</button>
+
+    <div class="completed-message" id="completedMessage">🎉 TIME'S UP! 🎉</div>
+
+    <script>
+        let countdownInterval;
+        let totalSeconds = 0;
+        let originalTotalSeconds = 0;
+        let currentMode = 'countdown';
+
+        function selectMode(mode) {
+            currentMode = mode;
+
+            // Update button states
+            const buttons = document.querySelectorAll('.mode-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/hide appropriate inputs
+            if (mode === 'countdown') {
+                document.getElementById('countdownInput').style.display = 'flex';
+                document.getElementById('timeOfDayInput').classList.remove('active');
+            } else {
+                document.getElementById('countdownInput').style.display = 'none';
+                document.getElementById('timeOfDayInput').classList.add('active');
+
+                // Set default target time to current time + 5 minutes
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 5);
+                const timeString = String(now.getHours()).padStart(2, '0') + ':' +
+                                  String(now.getMinutes()).padStart(2, '0');
+                document.getElementById('targetTime').value = timeString;
+            }
+        }
+
+        function startTimer() {
+            if (currentMode === 'countdown') {
+                const hours = parseInt(document.getElementById('hours').value) || 0;
+                const minutes = parseInt(document.getElementById('minutes').value) || 0;
+                const seconds = parseInt(document.getElementById('seconds').value) || 0;
+
+                totalSeconds = hours * 3600 + minutes * 60 + seconds;
+            } else {
+                // Time of day mode
+                const targetTime = document.getElementById('targetTime').value;
+                if (!targetTime) {
+                    alert('Please select a target time!');
+                    return;
+                }
+
+                const [hours, minutes] = targetTime.split(':').map(Number);
+                const now = new Date();
+                const target = new Date();
+                target.setHours(hours, minutes, 0, 0);
+
+                // If target is before now, assume it's tomorrow
+                if (target <= now) {
+                    target.setDate(target.getDate() + 1);
+                }
+
+                totalSeconds = Math.floor((target - now) / 1000);
+            }
+
+            originalTotalSeconds = totalSeconds;
+
+            if (totalSeconds <= 0) {
+                alert('Please set a time greater than 0!');
+                return;
+            }
+
+            // Hide setup, show timer
+            document.getElementById('setupContainer').classList.add('hidden');
+            document.getElementById('timerDisplay').classList.add('active');
+            document.getElementById('resetButton').classList.add('active');
+
+            // Set background fill transition duration
+            const backgroundFill = document.getElementById('backgroundFill');
+            backgroundFill.style.transitionDuration = totalSeconds + 's';
+
+            // Start filling animation
+            setTimeout(() => {
+                backgroundFill.style.width = '100%';
+            }, 50);
+
+            // Update display immediately
+            updateDisplay();
+
+            // Start countdown
+            countdownInterval = setInterval(() => {
+                totalSeconds--;
+                updateDisplay();
+
+                if (totalSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    showCompletion();
+                }
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const display =
+                String(hours).padStart(2, '0') + ':' +
+                String(minutes).padStart(2, '0') + ':' +
+                String(seconds).padStart(2, '0');
+
+            document.getElementById('timerDisplay').textContent = display;
+        }
+
+        function showCompletion() {
+            document.getElementById('timerDisplay').classList.remove('active');
+            document.getElementById('completedMessage').classList.add('active');
+
+            // Play celebration animation
+            const message = document.getElementById('completedMessage');
+            message.style.animation = 'bounce 0.5s infinite';
+        }
+
+        function resetTimer() {
+            clearInterval(countdownInterval);
+
+            // Reset background fill
+            const backgroundFill = document.getElementById('backgroundFill');
+            backgroundFill.style.transitionDuration = '0s';
+            backgroundFill.style.width = '0%';
+
+            // Reset display
+            document.getElementById('setupContainer').classList.remove('hidden');
+            document.getElementById('timerDisplay').classList.remove('active');
+            document.getElementById('resetButton').classList.remove('active');
+            document.getElementById('completedMessage').classList.remove('active');
+
+            totalSeconds = 0;
+            originalTotalSeconds = 0;
+        }
+
+        // Allow Enter key to start timer
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !document.getElementById('setupContainer').classList.contains('hidden')) {
+                startTimer();
+            }
+        });
+    </script>
+</body>
+</html>
