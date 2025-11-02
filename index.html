@@ -122,6 +122,51 @@
             border-color: #4A90E2;
         }
 
+        .delayed-start-section {
+            margin-top: 30px;
+            border-top: 2px solid #f0f0f0;
+            padding-top: 20px;
+        }
+
+        .delayed-start-toggle {
+            background: white;
+            color: #4A90E2;
+            border: 2px solid #4A90E2;
+            padding: 12px 25px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: block;
+            margin: 0 auto 20px auto;
+        }
+
+        .delayed-start-toggle:hover {
+            background: #f0f0f0;
+        }
+
+        .delayed-start-toggle.active {
+            background: #4A90E2;
+            color: white;
+        }
+
+        .delayed-start-inputs {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .delayed-start-inputs.active {
+            display: block;
+        }
+
+        .delayed-label {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
         .time-input {
             display: flex;
             flex-direction: column;
@@ -326,10 +371,17 @@
                 </div>
             </div>
 
-            <div class="time-input-group" style="margin-top: 20px;">
-                <div class="time-input">
-                    <label>Start Time (optional)</label>
-                    <input type="time" id="startTime" placeholder="Now">
+            <div class="delayed-start-section">
+                <button class="delayed-start-toggle" id="delayedStartToggle" onclick="toggleDelayedStart()">
+                    ⏰ Add Delayed Start
+                </button>
+                <div class="delayed-start-inputs" id="delayedStartInputs">
+                    <div class="time-input-group">
+                        <div class="time-input">
+                            <label class="delayed-label" id="delayedLabel">Start Time</label>
+                            <input type="time" id="startTime">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -388,6 +440,41 @@
                 const timeString = String(now.getHours()).padStart(2, '0') + ':' +
                                   String(now.getMinutes()).padStart(2, '0');
                 document.getElementById('targetTime').value = timeString;
+            }
+
+            // Update delayed start label based on mode
+            updateDelayedStartLabel();
+        }
+
+        function toggleDelayedStart() {
+            const toggle = document.getElementById('delayedStartToggle');
+            const inputs = document.getElementById('delayedStartInputs');
+
+            if (inputs.classList.contains('active')) {
+                inputs.classList.remove('active');
+                toggle.classList.remove('active');
+                toggle.textContent = '⏰ Add Delayed Start';
+                document.getElementById('startTime').value = '';
+            } else {
+                inputs.classList.add('active');
+                toggle.classList.add('active');
+                toggle.textContent = '✓ Delayed Start Enabled';
+
+                // Set default start time to current time + 1 minute
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 1);
+                const timeString = String(now.getHours()).padStart(2, '0') + ':' +
+                                  String(now.getMinutes()).padStart(2, '0');
+                document.getElementById('startTime').value = timeString;
+            }
+        }
+
+        function updateDelayedStartLabel() {
+            const label = document.getElementById('delayedLabel');
+            if (currentMode === 'countdown') {
+                label.textContent = 'Start Time';
+            } else {
+                label.textContent = 'Start Time';
             }
         }
 
@@ -581,6 +668,12 @@
             document.getElementById('waitingDisplay').classList.remove('active');
             document.getElementById('resetButton').classList.remove('active');
             document.getElementById('completedMessage').classList.remove('active');
+
+            // Reset delayed start section
+            document.getElementById('delayedStartInputs').classList.remove('active');
+            document.getElementById('delayedStartToggle').classList.remove('active');
+            document.getElementById('delayedStartToggle').textContent = '⏰ Add Delayed Start';
+            document.getElementById('startTime').value = '';
 
             totalSeconds = 0;
             originalTotalSeconds = 0;
