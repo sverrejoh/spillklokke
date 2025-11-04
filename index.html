@@ -59,143 +59,66 @@
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             text-align: center;
+            max-width: 600px;
         }
 
         .setup-container h1 {
             color: #FF8C42;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-size: 2.5em;
         }
 
-        .timer-mode-buttons {
+        .time-labels {
             display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .mode-button {
-            background: white;
-            color: #FF8C42;
-            border: 3px solid #FF8C42;
-            padding: 15px 30px;
-            font-size: 1.2em;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        .mode-button:hover {
-            background: #f0f0f0;
-        }
-
-        .mode-button.active {
-            background: #FF8C42;
-            color: white;
-        }
-
-        .time-input-group {
-            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
             gap: 20px;
-            justify-content: center;
-            margin-bottom: 30px;
         }
 
-        .time-of-day-input {
-            display: none;
+        .time-label {
+            flex: 1;
         }
 
-        .time-of-day-input.active {
-            display: flex;
-        }
-
-        .time-of-day-input input[type="time"] {
-            width: 200px;
-            height: 60px;
-            font-size: 1.8em;
-            text-align: center;
-            border: 3px solid #FF8C42;
-            border-radius: 10px;
-            outline: none;
-            padding: 10px;
-        }
-
-        .time-of-day-input input[type="time"]:focus {
-            border-color: #4A90E2;
-        }
-
-        .delayed-start-section {
-            margin-top: 30px;
-            border-top: 2px solid #f0f0f0;
-            padding-top: 20px;
-        }
-
-        .delayed-start-toggle {
-            background: white;
-            color: #4A90E2;
-            border: 2px solid #4A90E2;
-            padding: 12px 25px;
-            font-size: 1em;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-            display: block;
-            margin: 0 auto 20px auto;
-        }
-
-        .delayed-start-toggle:hover {
-            background: #f0f0f0;
-        }
-
-        .delayed-start-toggle.active {
-            background: #4A90E2;
-            color: white;
-        }
-
-        .delayed-start-inputs {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .delayed-start-inputs.active {
-            display: block;
-        }
-
-        .delayed-label {
-            color: #666;
-            font-size: 0.95em;
+        .time-label-icon {
+            font-size: 1.5em;
             margin-bottom: 5px;
-            font-weight: bold;
         }
 
-        .time-input {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .time-label-title {
+            font-size: 0.9em;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
 
-        .time-input label {
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        .time-input input {
-            width: 80px;
-            height: 60px;
+        .time-label-value {
             font-size: 2em;
-            text-align: center;
-            border: 3px solid #FF8C42;
-            border-radius: 10px;
-            outline: none;
-            transition: border-color 0.3s;
+            color: #333;
+            font-weight: bold;
         }
 
-        .time-input input:focus {
-            border-color: #4A90E2;
+        .time-label-day {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .circular-clock-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto 30px;
+        }
+
+        #clockCanvas {
+            width: 100%;
+            height: auto;
+            touch-action: none;
+            cursor: grab;
+        }
+
+        #clockCanvas:active {
+            cursor: grabbing;
         }
 
         .start-button {
@@ -359,45 +282,23 @@
         <div class="setup-container" id="setupContainer">
             <h1>⏰ Set Timer</h1>
 
-            <div class="timer-mode-buttons">
-                <button class="mode-button active" onclick="selectMode('countdown')">⏱️ Countdown</button>
-                <button class="mode-button" onclick="selectMode('timeofday')">🕐 Time of Day</button>
-            </div>
-
-            <div class="time-input-group" id="countdownInput">
-                <div class="time-input">
-                    <label>Hours</label>
-                    <input type="number" id="hours" min="0" max="23" value="0">
+            <div class="time-labels">
+                <div class="time-label">
+                    <div class="time-label-icon">🛏️</div>
+                    <div class="time-label-title">Start</div>
+                    <div class="time-label-value" id="startTimeLabel">00:00</div>
+                    <div class="time-label-day" id="startDayLabel">Today</div>
                 </div>
-                <div class="time-input">
-                    <label>Minutes</label>
-                    <input type="number" id="minutes" min="0" max="59" value="5">
-                </div>
-                <div class="time-input">
-                    <label>Seconds</label>
-                    <input type="number" id="seconds" min="0" max="59" value="0">
+                <div class="time-label">
+                    <div class="time-label-icon">⏰</div>
+                    <div class="time-label-title">End</div>
+                    <div class="time-label-value" id="endTimeLabel">01:00</div>
+                    <div class="time-label-day" id="endDayLabel">Today</div>
                 </div>
             </div>
 
-            <div class="time-input-group time-of-day-input" id="timeOfDayInput">
-                <div class="time-input">
-                    <label>Target Time</label>
-                    <input type="time" id="targetTime">
-                </div>
-            </div>
-
-            <div class="delayed-start-section">
-                <button class="delayed-start-toggle" id="delayedStartToggle" onclick="toggleDelayedStart()">
-                    ⏰ Add Delayed Start
-                </button>
-                <div class="delayed-start-inputs" id="delayedStartInputs">
-                    <div class="time-input-group">
-                        <div class="time-input">
-                            <label class="delayed-label" id="delayedLabel">Start Time</label>
-                            <input type="time" id="startTime">
-                        </div>
-                    </div>
-                </div>
+            <div class="circular-clock-container">
+                <canvas id="clockCanvas" width="900" height="900"></canvas>
             </div>
 
             <button class="start-button" onclick="startTimer()">START! 🚀</button>
@@ -423,7 +324,6 @@
         let countdownInterval;
         let totalSeconds = 0;
         let originalTotalSeconds = 0;
-        let currentMode = 'countdown';
         let waitingForStart = false;
         let startDateTime = null;
         let endDateTime = null;
@@ -433,65 +333,286 @@
         const timeFormat = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' }).resolvedOptions();
         use24Hour = timeFormat.hour12 === false;
 
-        function selectMode(mode) {
-            currentMode = mode;
+        // Circular Clock Time Picker
+        class CircularClock {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height / 2;
+                this.radius = 350;
 
-            // Update button states
-            const buttons = document.querySelectorAll('.mode-button');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
-            // Show/hide appropriate inputs
-            if (mode === 'countdown') {
-                document.getElementById('countdownInput').style.display = 'flex';
-                document.getElementById('timeOfDayInput').classList.remove('active');
-            } else {
-                document.getElementById('countdownInput').style.display = 'none';
-                document.getElementById('timeOfDayInput').classList.add('active');
-
-                // Set default target time to current time + 5 minutes
+                // Initialize with current time and 1 hour duration
                 const now = new Date();
-                now.setMinutes(now.getMinutes() + 5);
-                const timeString = String(now.getHours()).padStart(2, '0') + ':' +
-                                  String(now.getMinutes()).padStart(2, '0');
-                document.getElementById('targetTime').value = timeString;
+                this.startAngle = this.timeToAngle(now.getHours(), now.getMinutes());
+                const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+                this.endAngle = this.timeToAngle(oneHourLater.getHours(), oneHourLater.getMinutes());
+
+                this.dragging = null; // 'start', 'end', or null
+                this.handleRadius = 30;
+
+                this.setupEventListeners();
+                this.draw();
+                this.updateLabels();
             }
 
-            // Update delayed start label based on mode
-            updateDelayedStartLabel();
-        }
+            timeToAngle(hours, minutes) {
+                // Convert time to angle (0° = 12 o'clock, clockwise)
+                const totalMinutes = (hours % 24) * 60 + minutes;
+                return (totalMinutes / (24 * 60)) * 360 - 90; // -90 to start from top
+            }
 
-        function toggleDelayedStart() {
-            const toggle = document.getElementById('delayedStartToggle');
-            const inputs = document.getElementById('delayedStartInputs');
+            angleToTime(angle) {
+                // Convert angle to time
+                let normalizedAngle = (angle + 90) % 360;
+                if (normalizedAngle < 0) normalizedAngle += 360;
+                const totalMinutes = (normalizedAngle / 360) * (24 * 60);
+                const hours = Math.floor(totalMinutes / 60) % 24;
+                const minutes = Math.round(totalMinutes % 60);
+                return { hours, minutes };
+            }
 
-            if (inputs.classList.contains('active')) {
-                inputs.classList.remove('active');
-                toggle.classList.remove('active');
-                toggle.textContent = '⏰ Add Delayed Start';
-                document.getElementById('startTime').value = '';
-            } else {
-                inputs.classList.add('active');
-                toggle.classList.add('active');
-                toggle.textContent = '✓ Delayed Start Enabled';
+            getTimeFromAngles(angle) {
+                const time = this.angleToTime(angle);
+                return new Date(new Date().setHours(time.hours, time.minutes, 0, 0));
+            }
 
-                // Set default start time to current time + 1 minute
+            setupEventListeners() {
+                const getPosition = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const scaleX = this.canvas.width / rect.width;
+                    const scaleY = this.canvas.height / rect.height;
+
+                    let clientX, clientY;
+                    if (e.touches && e.touches.length > 0) {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    } else {
+                        clientX = e.clientX;
+                        clientY = e.clientY;
+                    }
+
+                    return {
+                        x: (clientX - rect.left) * scaleX,
+                        y: (clientY - rect.top) * scaleY
+                    };
+                };
+
+                const handleStart = (e) => {
+                    e.preventDefault();
+                    const pos = getPosition(e);
+                    const angle = Math.atan2(pos.y - this.centerY, pos.x - this.centerX) * (180 / Math.PI);
+
+                    // Check if clicking near start or end handle
+                    const startHandlePos = this.getHandlePosition(this.startAngle);
+                    const endHandlePos = this.getHandlePosition(this.endAngle);
+
+                    const distStart = Math.sqrt(Math.pow(pos.x - startHandlePos.x, 2) + Math.pow(pos.y - startHandlePos.y, 2));
+                    const distEnd = Math.sqrt(Math.pow(pos.x - endHandlePos.x, 2) + Math.pow(pos.y - endHandlePos.y, 2));
+
+                    if (distStart < this.handleRadius * 1.5) {
+                        this.dragging = 'start';
+                    } else if (distEnd < this.handleRadius * 1.5) {
+                        this.dragging = 'end';
+                    }
+                };
+
+                const handleMove = (e) => {
+                    if (!this.dragging) return;
+                    e.preventDefault();
+
+                    const pos = getPosition(e);
+                    const angle = Math.atan2(pos.y - this.centerY, pos.x - this.centerX) * (180 / Math.PI);
+
+                    if (this.dragging === 'start') {
+                        this.startAngle = angle;
+                    } else if (this.dragging === 'end') {
+                        this.endAngle = angle;
+                    }
+
+                    this.draw();
+                    this.updateLabels();
+                };
+
+                const handleEnd = (e) => {
+                    if (this.dragging) {
+                        e.preventDefault();
+                    }
+                    this.dragging = null;
+                };
+
+                // Mouse events
+                this.canvas.addEventListener('mousedown', handleStart);
+                this.canvas.addEventListener('mousemove', handleMove);
+                this.canvas.addEventListener('mouseup', handleEnd);
+                this.canvas.addEventListener('mouseleave', handleEnd);
+
+                // Touch events
+                this.canvas.addEventListener('touchstart', handleStart, { passive: false });
+                this.canvas.addEventListener('touchmove', handleMove, { passive: false });
+                this.canvas.addEventListener('touchend', handleEnd, { passive: false });
+            }
+
+            getHandlePosition(angle) {
+                const rad = angle * (Math.PI / 180);
+                return {
+                    x: this.centerX + Math.cos(rad) * this.radius,
+                    y: this.centerY + Math.sin(rad) * this.radius
+                };
+            }
+
+            normalizeAngle(angle) {
+                let normalized = angle % 360;
+                if (normalized < 0) normalized += 360;
+                return normalized;
+            }
+
+            draw() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw clock face background
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#2c2c2e';
+                ctx.fill();
+
+                // Draw hour markers
+                ctx.strokeStyle = '#48484a';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 24; i++) {
+                    const angle = (i / 24) * 2 * Math.PI - Math.PI / 2;
+                    const innerRadius = this.radius - 20;
+                    const outerRadius = this.radius - 5;
+
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        this.centerX + Math.cos(angle) * innerRadius,
+                        this.centerY + Math.sin(angle) * innerRadius
+                    );
+                    ctx.lineTo(
+                        this.centerX + Math.cos(angle) * outerRadius,
+                        this.centerY + Math.sin(angle) * outerRadius
+                    );
+                    ctx.stroke();
+                }
+
+                // Draw hour numbers (every 2 hours)
+                ctx.fillStyle = '#8e8e93';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                for (let i = 0; i < 24; i += 2) {
+                    const angle = (i / 24) * 2 * Math.PI - Math.PI / 2;
+                    const textRadius = this.radius - 50;
+                    ctx.fillText(
+                        i.toString(),
+                        this.centerX + Math.cos(angle) * textRadius,
+                        this.centerY + Math.sin(angle) * textRadius
+                    );
+                }
+
+                // Draw time range arc
+                const startRad = this.startAngle * (Math.PI / 180);
+                const endRad = this.endAngle * (Math.PI / 180);
+
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, this.radius - 40, startRad, endRad);
+                ctx.lineWidth = 60;
+                ctx.strokeStyle = '#FF8C42';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                // Draw start handle
+                const startPos = this.getHandlePosition(this.startAngle);
+                ctx.beginPath();
+                ctx.arc(startPos.x, startPos.y, this.handleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#FF8C42';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Draw start icon (bed emoji approximation)
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 28px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🛏️', startPos.x, startPos.y);
+
+                // Draw end handle
+                const endPos = this.getHandlePosition(this.endAngle);
+                ctx.beginPath();
+                ctx.arc(endPos.x, endPos.y, this.handleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#FF8C42';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                // Draw end icon (alarm emoji approximation)
+                ctx.fillStyle = 'white';
+                ctx.fillText('⏰', endPos.x, endPos.y);
+
+                // Draw center icon
+                ctx.fillStyle = '#8e8e93';
+                ctx.font = '48px Arial';
+                ctx.fillText('🌙', this.centerX, this.centerY);
+            }
+
+            updateLabels() {
+                const startTime = this.getTimeFromAngles(this.startAngle);
+                const endTime = this.getTimeFromAngles(this.endAngle);
+
+                // Handle day wrap-around
+                if (this.normalizeAngle(this.endAngle) < this.normalizeAngle(this.startAngle)) {
+                    endTime.setDate(endTime.getDate() + 1);
+                }
+
                 const now = new Date();
-                now.setMinutes(now.getMinutes() + 1);
-                const timeString = String(now.getHours()).padStart(2, '0') + ':' +
-                                  String(now.getMinutes()).padStart(2, '0');
-                document.getElementById('startTime').value = timeString;
+                now.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                // Format times
+                const formatTime = (date) => {
+                    return String(date.getHours()).padStart(2, '0') + ':' +
+                           String(date.getMinutes()).padStart(2, '0');
+                };
+
+                const getDayLabel = (date) => {
+                    const dateOnly = new Date(date);
+                    dateOnly.setHours(0, 0, 0, 0);
+                    if (dateOnly.getTime() === now.getTime()) return 'Today';
+                    if (dateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow';
+                    return dateOnly.toLocaleDateString('en-US', { weekday: 'short' });
+                };
+
+                document.getElementById('startTimeLabel').textContent = formatTime(startTime);
+                document.getElementById('startDayLabel').textContent = getDayLabel(startTime);
+                document.getElementById('endTimeLabel').textContent = formatTime(endTime);
+                document.getElementById('endDayLabel').textContent = getDayLabel(endTime);
+            }
+
+            getStartTime() {
+                return this.getTimeFromAngles(this.startAngle);
+            }
+
+            getEndTime() {
+                const endTime = this.getTimeFromAngles(this.endAngle);
+                // Handle day wrap-around
+                if (this.normalizeAngle(this.endAngle) < this.normalizeAngle(this.startAngle)) {
+                    endTime.setDate(endTime.getDate() + 1);
+                }
+                return endTime;
             }
         }
 
-        function updateDelayedStartLabel() {
-            const label = document.getElementById('delayedLabel');
-            if (currentMode === 'countdown') {
-                label.textContent = 'Start Time';
-            } else {
-                label.textContent = 'Start Time';
-            }
-        }
+        // Initialize circular clock
+        let circularClock = null;
+        window.addEventListener('load', () => {
+            circularClock = new CircularClock('clockCanvas');
+        });
 
         function formatTime(date) {
             const options = {
@@ -513,52 +634,23 @@
         }
 
         function startTimer() {
-            const now = new Date();
-            const startTimeInput = document.getElementById('startTime').value;
-
-            // Parse start time if provided
-            if (startTimeInput) {
-                const [hours, minutes] = startTimeInput.split(':').map(Number);
-                startDateTime = new Date();
-                startDateTime.setHours(hours, minutes, 0, 0);
-
-                // If start time is before now, assume it's tomorrow
-                if (startDateTime <= now) {
-                    startDateTime.setDate(startDateTime.getDate() + 1);
-                }
-            } else {
-                startDateTime = now;
+            if (!circularClock) {
+                alert('Clock not initialized yet!');
+                return;
             }
 
-            // Calculate end time
-            if (currentMode === 'countdown') {
-                const hours = parseInt(document.getElementById('hours').value) || 0;
-                const minutes = parseInt(document.getElementById('minutes').value) || 0;
-                const seconds = parseInt(document.getElementById('seconds').value) || 0;
+            const now = new Date();
+            startDateTime = circularClock.getStartTime();
+            endDateTime = circularClock.getEndTime();
 
-                const durationSeconds = hours * 3600 + minutes * 60 + seconds;
-                if (durationSeconds <= 0) {
-                    alert('Please set a time greater than 0!');
+            // If start time is in the past, assume it starts now
+            if (startDateTime <= now) {
+                // Check if end time is also in the past
+                if (endDateTime <= now) {
+                    alert('End time has already passed! Please adjust the times.');
                     return;
                 }
-
-                endDateTime = new Date(startDateTime.getTime() + durationSeconds * 1000);
-            } else {
-                // Time of day mode
-                const targetTime = document.getElementById('targetTime').value;
-                if (!targetTime) {
-                    alert('Please select a target time!');
-                    return;
-                }
-
-                const [hours, minutes] = targetTime.split(':').map(Number);
-                endDateTime = new Date();
-                endDateTime.setHours(hours, minutes, 0, 0);
-
-                // If target is before start time, assume it's tomorrow
-                if (endDateTime <= startDateTime) {
-                    endDateTime.setDate(endDateTime.getDate() + 1);
-                }
+                startDateTime = now;
             }
 
             // Check if we need to wait for start time
@@ -703,11 +795,15 @@
             completedMessage.classList.remove('active');
             completedMessage.style.animation = '';
 
-            // Reset delayed start section
-            document.getElementById('delayedStartInputs').classList.remove('active');
-            document.getElementById('delayedStartToggle').classList.remove('active');
-            document.getElementById('delayedStartToggle').textContent = '⏰ Add Delayed Start';
-            document.getElementById('startTime').value = '';
+            // Reset circular clock to default (current time + 1 hour)
+            if (circularClock) {
+                const now = new Date();
+                circularClock.startAngle = circularClock.timeToAngle(now.getHours(), now.getMinutes());
+                const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+                circularClock.endAngle = circularClock.timeToAngle(oneHourLater.getHours(), oneHourLater.getMinutes());
+                circularClock.draw();
+                circularClock.updateLabels();
+            }
 
             totalSeconds = 0;
             originalTotalSeconds = 0;
