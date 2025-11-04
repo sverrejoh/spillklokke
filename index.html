@@ -61,7 +61,6 @@
             text-align: center;
             max-width: 650px;
             border: 3px solid #00FFFF;
-            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
             position: relative;
         }
 
@@ -119,7 +118,6 @@
             border-radius: 0;
             padding: 15px 10px;
             position: relative;
-            clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
         }
 
         .time-label::before {
@@ -138,12 +136,6 @@
             50% { opacity: 1; }
         }
 
-        .time-label-icon {
-            font-size: 2em;
-            margin-bottom: 5px;
-            filter: drop-shadow(0 0 5px currentColor);
-        }
-
         .time-label-title {
             font-size: 0.75em;
             color: #00FFFF;
@@ -159,6 +151,9 @@
             font-weight: bold;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
             font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .time-label-day {
@@ -166,11 +161,12 @@
             color: #00FFFF;
             text-transform: uppercase;
             letter-spacing: 1px;
+            white-space: nowrap;
         }
 
         .duration-label {
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 107, 107, 0.15));
-            border: 2px solid #FFD700;
+            border: 2px solid #00FFFF;
         }
 
         .circular-clock-container {
@@ -205,7 +201,6 @@
             text-transform: uppercase;
             letter-spacing: 3px;
             position: relative;
-            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
         }
 
         .start-button::before {
@@ -384,19 +379,16 @@
 
             <div class="time-labels">
                 <div class="time-label">
-                    <div class="time-label-icon">▶️</div>
                     <div class="time-label-title">Start</div>
                     <div class="time-label-value" id="startTimeLabel">00:00</div>
                     <div class="time-label-day" id="startDayLabel">Today</div>
                 </div>
                 <div class="time-label duration-label">
-                    <div class="time-label-icon">⏱️</div>
                     <div class="time-label-title">Duration</div>
                     <div class="time-label-value" id="durationLabel">1h 0m</div>
                     <div class="time-label-day">&nbsp;</div>
                 </div>
                 <div class="time-label">
-                    <div class="time-label-icon">⏹️</div>
                     <div class="time-label-title">End</div>
                     <div class="time-label-value" id="endTimeLabel">01:00</div>
                     <div class="time-label-day" id="endDayLabel">Today</div>
@@ -689,13 +681,6 @@
                 ctx.stroke();
                 ctx.shadowBlur = 0;
 
-                // Draw start icon (play button)
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('▶️', startPos.x, startPos.y);
-
                 // Draw end handle
                 const endPos = this.getHandlePosition(this.endAngle);
 
@@ -709,18 +694,6 @@
                 ctx.strokeStyle = '#00FFFF';
                 ctx.lineWidth = 4;
                 ctx.stroke();
-                ctx.shadowBlur = 0;
-
-                // Draw end icon (stop button)
-                ctx.fillStyle = '#000';
-                ctx.fillText('⏹️', endPos.x, endPos.y);
-
-                // Draw center icon (screen/TV)
-                ctx.fillStyle = '#00FFFF';
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#00FFFF';
-                ctx.font = '64px Arial';
-                ctx.fillText('📺', this.centerX, this.centerY);
                 ctx.shadowBlur = 0;
             }
 

@@ -1,5 +1,5 @@
 // Service Worker for Spillklokke
-const CACHE_NAME = 'spillklokke-v5';
+const CACHE_NAME = 'spillklokke-v6';
 const urlsToCache = [
   '/',
   '/index.html',
