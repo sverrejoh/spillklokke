@@ -325,6 +325,7 @@
             text-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
             z-index: 4;
             animation: bounce 1s infinite;
+            white-space: nowrap;
         }
 
         .completed-message.active {
@@ -335,10 +336,21 @@
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.1); }
         }
+        /* WebGL Particle Canvas */
+        .particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
     <div class="background-fill" id="backgroundFill"></div>
+    <canvas class="particle-canvas" id="particleCanvas"></canvas>
 
     <div class="content" id="content">
         <div class="setup-container" id="setupContainer">
@@ -606,11 +618,20 @@
             // Reset background to blue
             document.body.style.background = '#4A90E2';
 
-            // Set background fill transition duration
+            // Reset and start background fill animation
             const backgroundFill = document.getElementById('backgroundFill');
+
+            // First, ensure width is at 0% with no transition
+            backgroundFill.style.transitionDuration = '0s';
+            backgroundFill.style.width = '0%';
+
+            // Force a reflow to ensure the above changes are applied
+            backgroundFill.offsetHeight;
+
+            // Now set the transition duration and target width
             backgroundFill.style.transitionDuration = totalSeconds + 's';
 
-            // Start filling animation
+            // Start filling animation after ensuring transition is set
             setTimeout(() => {
                 backgroundFill.style.width = '100%';
             }, 50);
@@ -650,6 +671,11 @@
             // Play celebration animation
             const message = document.getElementById('completedMessage');
             message.style.animation = 'bounce 0.5s infinite';
+
+            // Stop particle animation
+            if (particleSystem) {
+                particleSystem.stop();
+            }
         }
 
         function resetTimer() {
@@ -730,6 +756,372 @@
         if (isIOS) {
             document.getElementById('fullscreenButton').style.display = 'none';
         }
+
+        // WebGL Particle System
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('particleCanvas');
+                this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+
+                if (!this.gl) {
+                    console.error('WebGL not supported');
+                    return;
+                }
+
+                this.particles = [];
+                this.maxParticles = 800;
+                this.animationRunning = false;
+                this.edgePosition = 0;
+                this.time = 0;
+                this.lastTime = performance.now();
+                this.startTime = 0;
+                this.duration = 0;
+
+                this.init();
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            init() {
+                const gl = this.gl;
+
+                // Vertex shader - handles particle positions and sizes
+                const vertexShaderSource = `
+                    precision mediump float;
+
+                    attribute vec2 a_position;
+                    attribute vec3 a_color;
+                    attribute float a_size;
+                    attribute float a_life;
+                    attribute float a_sparkle;
+
+                    uniform mat4 u_projection;
+                    uniform float u_time;
+
+                    varying vec3 v_color;
+                    varying float v_life;
+                    varying float v_sparkle;
+
+                    void main() {
+                        gl_Position = u_projection * vec4(a_position, 0.0, 1.0);
+                        gl_PointSize = a_size * (1.0 + sin(u_time * 10.0 + a_sparkle * 6.28) * 0.3);
+                        v_color = a_color;
+                        v_life = a_life;
+                        v_sparkle = a_sparkle;
+                    }
+                `;
+
+                // Fragment shader - creates colorful, glowing particles
+                const fragmentShaderSource = `
+                    precision mediump float;
+
+                    varying vec3 v_color;
+                    varying float v_life;
+                    varying float v_sparkle;
+
+                    uniform float u_time;
+
+                    void main() {
+                        vec2 coord = gl_PointCoord - vec2(0.5);
+                        float distance = length(coord);
+
+                        if (distance > 0.5) {
+                            discard;
+                        }
+
+                        // Create soft circular particles with glow effect
+                        float alpha = 1.0 - smoothstep(0.0, 0.5, distance);
+                        alpha *= v_life;
+
+                        // Add sparkle effect
+                        float sparkle = sin(u_time * 15.0 + v_sparkle * 6.28) * 0.5 + 0.5;
+                        vec3 sparkleColor = mix(v_color, vec3(1.0, 1.0, 1.0), sparkle * 0.5);
+
+                        // Add inner bright core for welding effect
+                        float core = 1.0 - smoothstep(0.0, 0.2, distance);
+                        sparkleColor = mix(sparkleColor, vec3(1.0, 0.95, 0.8), core * 0.7);
+
+                        gl_FragColor = vec4(sparkleColor, alpha * 0.9);
+                    }
+                `;
+
+                // Compile shaders
+                this.vertexShader = this.createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+                this.fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+                // Create program
+                this.program = gl.createProgram();
+                gl.attachShader(this.program, this.vertexShader);
+                gl.attachShader(this.program, this.fragmentShader);
+                gl.linkProgram(this.program);
+
+                if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+                    console.error('Program link failed:', gl.getProgramInfoLog(this.program));
+                    return;
+                }
+
+                // Get attribute and uniform locations
+                this.attributes = {
+                    position: gl.getAttribLocation(this.program, 'a_position'),
+                    color: gl.getAttribLocation(this.program, 'a_color'),
+                    size: gl.getAttribLocation(this.program, 'a_size'),
+                    life: gl.getAttribLocation(this.program, 'a_life'),
+                    sparkle: gl.getAttribLocation(this.program, 'a_sparkle')
+                };
+
+                this.uniforms = {
+                    projection: gl.getUniformLocation(this.program, 'u_projection'),
+                    time: gl.getUniformLocation(this.program, 'u_time')
+                };
+
+                // Create buffers
+                this.positionBuffer = gl.createBuffer();
+                this.colorBuffer = gl.createBuffer();
+                this.sizeBuffer = gl.createBuffer();
+                this.lifeBuffer = gl.createBuffer();
+                this.sparkleBuffer = gl.createBuffer();
+
+                // Set up blending for transparency
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            }
+
+            createShader(gl, type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+
+                return shader;
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+
+                if (this.gl) {
+                    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+
+            createProjectionMatrix() {
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+
+                return new Float32Array([
+                    2 / width, 0, 0, 0,
+                    0, -2 / height, 0, 0,
+                    0, 0, -1, 0,
+                    -1, 1, 0, 1
+                ]);
+            }
+
+            getRandomColor() {
+                // Child-friendly rainbow colors
+                const colors = [
+                    [1.0, 0.4, 0.4],  // Red
+                    [1.0, 0.6, 0.2],  // Orange
+                    [1.0, 0.9, 0.3],  // Yellow
+                    [0.4, 1.0, 0.4],  // Green
+                    [0.3, 0.8, 1.0],  // Cyan
+                    [0.5, 0.5, 1.0],  // Blue
+                    [0.9, 0.4, 1.0],  // Purple
+                    [1.0, 0.3, 0.7],  // Pink
+                    [1.0, 1.0, 0.5],  // Light yellow (spark)
+                ];
+
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            createParticle() {
+                const edgeX = this.edgePosition * this.canvas.width;
+
+                return {
+                    x: edgeX + (Math.random() - 0.5) * 10,
+                    y: Math.random() * this.canvas.height,
+                    vx: (Math.random() - 0.5) * 4 + 2, // Slight rightward bias
+                    vy: (Math.random() - 0.5) * 6,
+                    size: Math.random() * 25 + 10,
+                    color: this.getRandomColor(),
+                    life: 1.0,
+                    decay: Math.random() * 0.02 + 0.01,
+                    sparkle: Math.random(),
+                    gravity: Math.random() * 0.5 - 0.25
+                };
+            }
+
+            updateParticles(deltaTime) {
+                const edgeX = this.edgePosition * this.canvas.width;
+
+                // Create new particles at the edge
+                const particlesToCreate = Math.floor(Math.random() * 8 + 5);
+                for (let i = 0; i < particlesToCreate && this.particles.length < this.maxParticles; i++) {
+                    this.particles.push(this.createParticle());
+                }
+
+                // Update existing particles
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+
+                    // Physics update
+                    p.x += p.vx * deltaTime * 60;
+                    p.y += p.vy * deltaTime * 60;
+                    p.vy += p.gravity * deltaTime * 60;
+
+                    // Life decay
+                    p.life -= p.decay * deltaTime * 60;
+
+                    // Size pulse for welding effect
+                    if (p.life > 0.5) {
+                        p.size *= 1.01;
+                    } else {
+                        p.size *= 0.98;
+                    }
+
+                    // Remove dead particles
+                    if (p.life <= 0 || p.y > this.canvas.height + 50 || p.y < -50) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+
+            render() {
+                const gl = this.gl;
+                if (!gl) return;
+
+                // Clear canvas
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                if (this.particles.length === 0) return;
+
+                // Use shader program
+                gl.useProgram(this.program);
+
+                // Update uniforms
+                gl.uniformMatrix4fv(this.uniforms.projection, false, this.createProjectionMatrix());
+                gl.uniform1f(this.uniforms.time, this.time);
+
+                // Prepare data arrays
+                const positions = [];
+                const colors = [];
+                const sizes = [];
+                const lives = [];
+                const sparkles = [];
+
+                for (const p of this.particles) {
+                    positions.push(p.x, p.y);
+                    colors.push(...p.color);
+                    sizes.push(p.size);
+                    lives.push(p.life);
+                    sparkles.push(p.sparkle);
+                }
+
+                // Update position buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(this.attributes.position);
+                gl.vertexAttribPointer(this.attributes.position, 2, gl.FLOAT, false, 0, 0);
+
+                // Update color buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(this.attributes.color);
+                gl.vertexAttribPointer(this.attributes.color, 3, gl.FLOAT, false, 0, 0);
+
+                // Update size buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.sizeBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(this.attributes.size);
+                gl.vertexAttribPointer(this.attributes.size, 1, gl.FLOAT, false, 0, 0);
+
+                // Update life buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.lifeBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lives), gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(this.attributes.life);
+                gl.vertexAttribPointer(this.attributes.life, 1, gl.FLOAT, false, 0, 0);
+
+                // Update sparkle buffer
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.sparkleBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sparkles), gl.DYNAMIC_DRAW);
+                gl.enableVertexAttribArray(this.attributes.sparkle);
+                gl.vertexAttribPointer(this.attributes.sparkle, 1, gl.FLOAT, false, 0, 0);
+
+                // Draw particles as points
+                gl.drawArrays(gl.POINTS, 0, this.particles.length);
+            }
+
+            animate() {
+                if (!this.animationRunning) return;
+
+                const currentTime = performance.now();
+                const deltaTime = (currentTime - this.lastTime) / 1000;
+                this.lastTime = currentTime;
+                this.time += deltaTime;
+
+                // Calculate edge position based on elapsed time
+                const elapsed = (currentTime - this.startTime) / 1000;
+                const progress = Math.min(elapsed / this.duration, 1);
+                this.edgePosition = progress;
+
+                this.updateParticles(deltaTime);
+                this.render();
+
+                requestAnimationFrame(() => this.animate());
+            }
+
+            start(duration) {
+                this.animationRunning = true;
+                this.particles = [];
+                this.time = 0;
+                this.startTime = performance.now();
+                this.lastTime = this.startTime;
+                this.duration = duration || 300; // Default to 5 minutes if not provided
+                this.edgePosition = 0;
+                this.animate();
+            }
+
+            stop() {
+                this.animationRunning = false;
+                this.particles = [];
+                this.render(); // Clear canvas
+            }
+        }
+
+        // Initialize particle system
+        let particleSystem = null;
+
+        // Initialize particle system when page loads
+        window.addEventListener('load', () => {
+            particleSystem = new ParticleSystem();
+        });
+
+        // Hook into existing countdown start function
+        const originalStartCountdown = startCountdown;
+        startCountdown = function() {
+            originalStartCountdown.apply(this, arguments);
+
+            // Start particle animation with the same duration as the countdown
+            if (particleSystem && totalSeconds > 0) {
+                particleSystem.start(totalSeconds);
+            }
+        };
+
+        // Hook into existing reset function
+        const originalResetTimer = resetTimer;
+        resetTimer = function() {
+            originalResetTimer.apply(this, arguments);
+
+            // Stop particle animation
+            if (particleSystem) {
+                particleSystem.stop();
+            }
+        };
     </script>
 </body>
 </html>
