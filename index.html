@@ -11,6 +11,9 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -19,7 +22,7 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Titan One', 'Arial Black', sans-serif;
             overflow: hidden;
             height: 100vh;
             position: relative;
@@ -769,7 +772,7 @@
                 }
 
                 this.particles = [];
-                this.maxParticles = 800;
+                this.maxParticles = 8000; // Optimized for performance while maintaining density
                 this.animationRunning = false;
                 this.edgePosition = 0;
                 this.time = 0;
@@ -804,7 +807,7 @@
 
                     void main() {
                         gl_Position = u_projection * vec4(a_position, 0.0, 1.0);
-                        gl_PointSize = a_size * (1.0 + sin(u_time * 10.0 + a_sparkle * 6.28) * 0.3);
+                        gl_PointSize = a_size * (1.0 + sin(u_time * 8.0 + a_sparkle * 6.28) * 0.15); // Subtler pulse
                         v_color = a_color;
                         v_life = a_life;
                         v_sparkle = a_sparkle;
@@ -833,15 +836,15 @@
                         float alpha = 1.0 - smoothstep(0.0, 0.5, distance);
                         alpha *= v_life;
 
-                        // Add sparkle effect
-                        float sparkle = sin(u_time * 15.0 + v_sparkle * 6.28) * 0.5 + 0.5;
-                        vec3 sparkleColor = mix(v_color, vec3(1.0, 1.0, 1.0), sparkle * 0.5);
+                        // Add subtle sparkle effect
+                        float sparkle = sin(u_time * 12.0 + v_sparkle * 6.28) * 0.5 + 0.5;
+                        vec3 sparkleColor = mix(v_color, vec3(1.0, 1.0, 1.0), sparkle * 0.2); // Less white mixing
 
                         // Add inner bright core for welding effect
-                        float core = 1.0 - smoothstep(0.0, 0.2, distance);
-                        sparkleColor = mix(sparkleColor, vec3(1.0, 0.95, 0.8), core * 0.7);
+                        float core = 1.0 - smoothstep(0.0, 0.25, distance);
+                        sparkleColor = mix(sparkleColor, vec3(1.0, 0.95, 0.8), core * 0.5); // Softer core
 
-                        gl_FragColor = vec4(sparkleColor, alpha * 0.9);
+                        gl_FragColor = vec4(sparkleColor, alpha * 0.7); // More transparent overall
                     }
                 `;
 
@@ -922,17 +925,13 @@
             }
 
             getRandomColor() {
-                // Child-friendly rainbow colors
+                // Subtle warm colors for welding effect
                 const colors = [
-                    [1.0, 0.4, 0.4],  // Red
-                    [1.0, 0.6, 0.2],  // Orange
-                    [1.0, 0.9, 0.3],  // Yellow
-                    [0.4, 1.0, 0.4],  // Green
-                    [0.3, 0.8, 1.0],  // Cyan
-                    [0.5, 0.5, 1.0],  // Blue
-                    [0.9, 0.4, 1.0],  // Purple
-                    [1.0, 0.3, 0.7],  // Pink
-                    [1.0, 1.0, 0.5],  // Light yellow (spark)
+                    [1.0, 0.7, 0.3],  // Warm yellow
+                    [1.0, 0.5, 0.2],  // Orange
+                    [1.0, 0.9, 0.6],  // Light yellow
+                    [1.0, 0.4, 0.3],  // Soft red-orange
+                    [1.0, 1.0, 0.8],  // White-yellow (hot spark)
                 ];
 
                 return colors[Math.floor(Math.random() * colors.length)];
@@ -941,25 +940,29 @@
             createParticle() {
                 const edgeX = this.edgePosition * this.canvas.width;
 
+                // Narrow spread with right-leaning bias and some backspread for softer edge
+                const spread = Math.random() * Math.random() * 10 - 2; // Spread from -2 to +8 pixels (right-biased)
+                const heightVar = Math.random(); // Full height coverage (0 to 1)
+
                 return {
-                    x: edgeX + (Math.random() - 0.5) * 10,
-                    y: Math.random() * this.canvas.height,
-                    vx: (Math.random() - 0.5) * 4 + 2, // Slight rightward bias
-                    vy: (Math.random() - 0.5) * 6,
-                    size: Math.random() * 25 + 10,
+                    x: edgeX + spread,
+                    y: this.canvas.height * heightVar,
+                    vx: Math.random() * 0.8 + 0.2, // Right-leaning movement (0.2-1.0 pixels/frame, softer)
+                    vy: (Math.random() - 0.5) * 0.5, // Very slow vertical movement
+                    size: Math.random() * 0.6 + 0.2, // Tiny particles (0.2-0.8 pixels)
                     color: this.getRandomColor(),
                     life: 1.0,
-                    decay: Math.random() * 0.02 + 0.01,
+                    decay: Math.random() * 0.01 + 0.015, // Faster decay (1-1.5 second lifetime) for performance
                     sparkle: Math.random(),
-                    gravity: Math.random() * 0.5 - 0.25
+                    gravity: 0 // No gravity for straight stream
                 };
             }
 
             updateParticles(deltaTime) {
                 const edgeX = this.edgePosition * this.canvas.width;
 
-                // Create new particles at the edge
-                const particlesToCreate = Math.floor(Math.random() * 8 + 5);
+                // Create new particles at the edge - consistent amount for smooth stream
+                const particlesToCreate = 60; // Consistent 60 particles per frame (no random waves)
                 for (let i = 0; i < particlesToCreate && this.particles.length < this.maxParticles; i++) {
                     this.particles.push(this.createParticle());
                 }
@@ -976,11 +979,11 @@
                     // Life decay
                     p.life -= p.decay * deltaTime * 60;
 
-                    // Size pulse for welding effect
-                    if (p.life > 0.5) {
-                        p.size *= 1.01;
+                    // Subtle size change for organic effect
+                    if (p.life > 0.7) {
+                        p.size *= 1.002; // Very subtle growth
                     } else {
-                        p.size *= 0.98;
+                        p.size *= 0.995; // Gentle shrinking
                     }
 
                     // Remove dead particles
