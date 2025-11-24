@@ -278,7 +278,7 @@
 
         .start-button {
             font-family: 'DM Sans', sans-serif;
-            background: var(--hot-coral);
+            background: linear-gradient(135deg, #22C55E 0%, #0EA5E9 100%);
             color: var(--pure-white);
             border: none;
             padding: 1.5vh 5vw;
@@ -293,25 +293,9 @@
             flex-shrink: 0;
         }
 
-        .start-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 0;
-            height: 100%;
-            background: var(--electric-lime);
-            transition: width 0.3s;
-            z-index: -1;
-        }
-
         .start-button:hover {
             transform: translate(-3px, -3px);
             box-shadow: 8px 8px 0 var(--deep-navy);
-        }
-
-        .start-button:hover::before {
-            width: 100%;
         }
 
         .start-button:active {
