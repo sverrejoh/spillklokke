@@ -1,19 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background with diagonal split -->
+  <rect width="100" height="100" fill="#0A1628"/>
+  <polygon points="50,0 100,0 100,100 0,100" fill="#CDFF00"/>
+
   <!-- Clock face -->
-  <circle cx="50" cy="50" r="45" fill="#FF8C42" stroke="#4A90E2" stroke-width="4"/>
+  <circle cx="50" cy="50" r="38" fill="#FFFFFF" stroke="#0A1628" stroke-width="3"/>
 
-  <!-- Clock center -->
-  <circle cx="50" cy="50" r="3" fill="#4A90E2"/>
+  <!-- Hour markers - Swiss railway style -->
+  <rect x="48" y="14" width="4" height="8" fill="#0A1628"/>
+  <rect x="48" y="78" width="4" height="8" fill="#0A1628"/>
+  <rect x="14" y="48" width="8" height="4" fill="#0A1628"/>
+  <rect x="78" y="48" width="8" height="4" fill="#0A1628"/>
 
-  <!-- Hour markers -->
-  <circle cx="50" cy="15" r="3" fill="#4A90E2"/>
-  <circle cx="50" cy="85" r="3" fill="#4A90E2"/>
-  <circle cx="15" cy="50" r="3" fill="#4A90E2"/>
-  <circle cx="85" cy="50" r="3" fill="#4A90E2"/>
+  <!-- Clock hands -->
+  <line x1="50" y1="50" x2="50" y2="28" stroke="#0A1628" stroke-width="4" stroke-linecap="round"/>
+  <line x1="50" y1="50" x2="68" y2="50" stroke="#0A1628" stroke-width="3" stroke-linecap="round"/>
 
-  <!-- Hour hand (pointing to 10) -->
-  <line x1="50" y1="50" x2="35" y2="30" stroke="#4A90E2" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- Minute hand (pointing to 2) -->
-  <line x1="50" y1="50" x2="65" y2="25" stroke="#FF6B6B" stroke-width="3" stroke-linecap="round"/>
+  <!-- Red dot (Swiss railway style) -->
+  <circle cx="50" cy="32" r="5" fill="#FF3864"/>
 </svg>
