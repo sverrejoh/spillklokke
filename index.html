@@ -553,10 +553,25 @@
 
                 this.dragging = null; // 'start', 'end', or null
                 this.handleRadius = 30;
+                this.startTimeManuallySet = false;
+                this.durationMinutes = 60; // Track duration separately
 
                 this.setupEventListeners();
                 this.draw();
                 this.updateLabels();
+
+                // Auto-update start time every minute if not manually set
+                setInterval(() => {
+                    if (!this.startTimeManuallySet) {
+                        const now = new Date();
+                        this.startAngle = this.timeToAngle(now.getHours(), now.getMinutes());
+                        // Keep same duration
+                        const newEnd = new Date(now.getTime() + this.durationMinutes * 60 * 1000);
+                        this.endAngle = this.timeToAngle(newEnd.getHours(), newEnd.getMinutes());
+                        this.draw();
+                        this.updateLabels();
+                    }
+                }, 60000);
             }
 
             timeToAngle(hours, minutes) {
@@ -688,6 +703,14 @@
                 const handleEnd = (e) => {
                     if (this.dragging) {
                         e.preventDefault();
+                        // Mark start time as manually set if start handle was dragged
+                        if (this.dragging === 'start') {
+                            this.startTimeManuallySet = true;
+                        }
+                        // Update stored duration
+                        const startTime = this.getStartTime();
+                        const endTime = this.getEndTime();
+                        this.durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
                     }
                     this.dragging = null;
                     this.dragStartAngle = null;
@@ -938,8 +961,13 @@
                     return dateOnly.toLocaleDateString('en-US', { weekday: 'short' });
                 };
 
+                // Check if start time is "now" (within 1 minute of current time)
+                const currentTime = new Date();
+                const timeDiff = Math.abs(startTime - currentTime);
+                const isNow = timeDiff < 60000; // Within 1 minute
+
                 document.getElementById('startTimeInput').value = formatTime(startTime);
-                document.getElementById('startDayLabel').textContent = getDayLabel(startTime);
+                document.getElementById('startDayLabel').textContent = isNow ? 'Now' : getDayLabel(startTime);
                 document.getElementById('endTimeInput').value = formatTime(endTime);
                 document.getElementById('endDayLabel').textContent = getDayLabel(endTime);
 
@@ -972,8 +1000,13 @@
             document.getElementById('startTimeInput').addEventListener('change', (e) => {
                 const [hours, minutes] = e.target.value.split(':').map(Number);
                 circularClock.startAngle = circularClock.timeToAngle(hours, minutes);
+                circularClock.startTimeManuallySet = true;
                 circularClock.draw();
                 circularClock.updateLabels();
+                // Update stored duration
+                const startTime = circularClock.getStartTime();
+                const endTime = circularClock.getEndTime();
+                circularClock.durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
             });
 
             document.getElementById('endTimeInput').addEventListener('change', (e) => {
@@ -981,6 +1014,10 @@
                 circularClock.endAngle = circularClock.timeToAngle(hours, minutes);
                 circularClock.draw();
                 circularClock.updateLabels();
+                // Update stored duration
+                const startTime = circularClock.getStartTime();
+                const endTime = circularClock.getEndTime();
+                circularClock.durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
             });
 
             // Duration editing - separate hours and minutes
@@ -1162,6 +1199,7 @@
             const newEndTime = new Date(startTime.getTime() + minutes * 60 * 1000);
 
             circularClock.endAngle = circularClock.timeToAngle(newEndTime.getHours(), newEndTime.getMinutes());
+            circularClock.durationMinutes = minutes;
             circularClock.draw();
             circularClock.updateLabels();
         }
@@ -1329,6 +1367,8 @@
                 circularClock.startAngle = circularClock.timeToAngle(now.getHours(), now.getMinutes());
                 const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
                 circularClock.endAngle = circularClock.timeToAngle(oneHourLater.getHours(), oneHourLater.getMinutes());
+                circularClock.startTimeManuallySet = false;
+                circularClock.durationMinutes = 60;
                 circularClock.draw();
                 circularClock.updateLabels();
             }
