@@ -619,12 +619,14 @@
                         this.dragStartValue = this.startAngle;
                         this.dragInitialValue = this.startAngle;
                         this.totalDragDelta = 0;
+                        this.caughtUp = false;
                     } else if (distEnd < this.handleRadius * 1.5) {
                         this.dragging = 'end';
                         this.dragStartAngle = angle;
                         this.dragStartValue = this.endAngle;
                         this.dragInitialValue = this.endAngle;
                         this.totalDragDelta = 0;
+                        this.caughtUp = false;
                     }
                 };
 
@@ -662,8 +664,21 @@
                         this.dragStartAngle = angle;
                         this.dragStartValue = this.dragging === 'start' ? this.startAngle : this.endAngle;
                     } else {
-                        // Fast mode: always animate smoothly to cursor position
-                        this.animateToAngle(angle);
+                        // Fast mode: animate until caught up, then direct
+                        if (this.caughtUp) {
+                            // Direct follow
+                            if (this.dragging === 'start') {
+                                this.startAngle = angle;
+                            } else if (this.dragging === 'end') {
+                                this.endAngle = angle;
+                            }
+                            this.draw();
+                            this.updateLabels();
+                        } else {
+                            // Still catching up - animate
+                            this.animateToAngle(angle);
+                        }
+                        return;
                     }
 
                     this.draw();
@@ -681,6 +696,7 @@
                     this.totalDragDelta = 0;
                     this.isAnimating = false;
                     this.animationTarget = null;
+                    this.caughtUp = false;
                 };
 
                 // Mouse events
@@ -725,6 +741,21 @@
                     // Normalize delta for shortest path
                     if (delta > 180) delta -= 360;
                     if (delta < -180) delta += 360;
+
+                    // Check if caught up (within 1 degree)
+                    if (Math.abs(delta) < 1) {
+                        // Snap to target and switch to direct mode
+                        if (this.dragging === 'start') {
+                            this.startAngle = this.animationTarget;
+                        } else if (this.dragging === 'end') {
+                            this.endAngle = this.animationTarget;
+                        }
+                        this.caughtUp = true;
+                        this.isAnimating = false;
+                        this.draw();
+                        this.updateLabels();
+                        return;
+                    }
 
                     // Lerp towards target (0.25 = smooth follow)
                     const newAngle = currentAngle + delta * 0.25;
