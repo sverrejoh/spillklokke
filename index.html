@@ -664,8 +664,8 @@
 
                     // Apply sensitivity based on total movement
                     if (Math.abs(this.totalDragDelta) < threshold) {
-                        // Slow mode: 0.15 sensitivity for fine control
-                        const sensitivity = 0.15;
+                        // Slow mode: 0.3 sensitivity for fine control
+                        const sensitivity = 0.3;
                         const adjustedDelta = angleDelta * sensitivity;
                         this.totalDragDelta += adjustedDelta;
 
