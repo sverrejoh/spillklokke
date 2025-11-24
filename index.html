@@ -1022,6 +1022,11 @@
             });
 
             function startEditing(field) {
+                // If already editing another field, finish it first
+                if (editingField && editingField !== field) {
+                    finishEditing();
+                }
+
                 editingField = field;
                 editValue = '';
                 const span = field === 'hours' ? hoursSpan : minutesSpan;
