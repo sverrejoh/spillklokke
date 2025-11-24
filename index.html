@@ -39,7 +39,7 @@
             position: relative;
         }
 
-        /* Diagonal background split */
+        /* Diagonal background split - through the middle */
         body::before {
             content: '';
             position: fixed;
@@ -48,7 +48,7 @@
             width: 100%;
             height: 100%;
             background: var(--electric-lime);
-            clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
             z-index: 0;
         }
 
