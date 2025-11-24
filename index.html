@@ -679,6 +679,8 @@
                     this.dragStartValue = null;
                     this.dragInitialValue = null;
                     this.totalDragDelta = 0;
+                    this.isAnimating = false;
+                    this.animationTarget = null;
                 };
 
                 // Mouse events
@@ -703,25 +705,29 @@
             }
 
             animateToAngle(targetAngle) {
-                const currentAngle = this.dragging === 'start' ? this.startAngle : this.endAngle;
-                let delta = targetAngle - currentAngle;
+                // Update target for ongoing animation
+                this.animationTarget = targetAngle;
 
-                // Normalize delta for shortest path
-                if (delta > 180) delta -= 360;
-                if (delta < -180) delta += 360;
+                // If animation already running, just update target
+                if (this.isAnimating) return;
 
-                const duration = 200; // ms
-                const startTime = performance.now();
-                const startAngle = currentAngle;
+                this.isAnimating = true;
 
-                const animate = (time) => {
-                    const elapsed = time - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
+                const animate = () => {
+                    if (!this.dragging || !this.isAnimating) {
+                        this.isAnimating = false;
+                        return;
+                    }
 
-                    // Ease out cubic
-                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const currentAngle = this.dragging === 'start' ? this.startAngle : this.endAngle;
+                    let delta = this.animationTarget - currentAngle;
 
-                    const newAngle = startAngle + delta * eased;
+                    // Normalize delta for shortest path
+                    if (delta > 180) delta -= 360;
+                    if (delta < -180) delta += 360;
+
+                    // Lerp towards target (0.25 = smooth follow)
+                    const newAngle = currentAngle + delta * 0.25;
 
                     if (this.dragging === 'start') {
                         this.startAngle = newAngle;
@@ -732,8 +738,11 @@
                     this.draw();
                     this.updateLabels();
 
-                    if (progress < 1 && this.dragging) {
+                    // Continue if still dragging
+                    if (this.dragging) {
                         requestAnimationFrame(animate);
+                    } else {
+                        this.isAnimating = false;
                     }
                 };
 
