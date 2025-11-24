@@ -212,39 +212,6 @@
             color: var(--deep-navy);
         }
 
-        .duration-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.8vw;
-        }
-
-        .duration-adjust-group {
-            display: flex;
-            gap: 0.3vw;
-        }
-
-        .duration-adjust {
-            font-family: 'DM Sans', sans-serif;
-            font-size: clamp(0.6rem, 1.2vh, 0.9rem);
-            font-weight: 900;
-            background: var(--deep-navy);
-            color: var(--pure-white);
-            border: none;
-            padding: 0.5vh 0.6vw;
-            cursor: pointer;
-            transition: all 0.15s;
-            min-width: 2.2vw;
-        }
-
-        .duration-adjust:hover {
-            background: var(--hot-coral);
-            transform: scale(1.1);
-        }
-
-        .duration-adjust:active {
-            transform: scale(0.95);
-        }
-
         .duration-value {
             min-width: 8vw;
             text-align: center;
@@ -516,18 +483,8 @@
                 </div>
                 <div class="time-label duration-label">
                     <div class="time-label-title">Duration</div>
-                    <div class="duration-controls">
-                        <div class="duration-adjust-group">
-                            <button class="duration-adjust" onclick="adjustDuration(-5)">-5</button>
-                            <button class="duration-adjust" onclick="adjustDuration(-1)">-1</button>
-                        </div>
-                        <div class="time-label-value duration-value" id="durationLabel" tabindex="0">1h 0m</div>
-                        <div class="duration-adjust-group">
-                            <button class="duration-adjust" onclick="adjustDuration(1)">+1</button>
-                            <button class="duration-adjust" onclick="adjustDuration(5)">+5</button>
-                        </div>
-                    </div>
-                    <div class="time-label-day">Click duration to edit</div>
+                    <div class="time-label-value duration-value" id="durationLabel" tabindex="0">1h 0m</div>
+                    <div class="time-label-day">&nbsp;</div>
                 </div>
                 <div class="time-label">
                     <div class="time-label-title">End</div>
@@ -653,10 +610,14 @@
                         this.dragging = 'start';
                         this.dragStartAngle = angle;
                         this.dragStartValue = this.startAngle;
+                        this.dragInitialValue = this.startAngle;
+                        this.totalDragDelta = 0;
                     } else if (distEnd < this.handleRadius * 1.5) {
                         this.dragging = 'end';
                         this.dragStartAngle = angle;
                         this.dragStartValue = this.endAngle;
+                        this.dragInitialValue = this.endAngle;
+                        this.totalDragDelta = 0;
                     }
                 };
 
@@ -667,26 +628,41 @@
                     const pos = getPosition(e);
                     const angle = Math.atan2(pos.y - this.centerY, pos.x - this.centerX) * (180 / Math.PI);
 
-                    // Calculate angle delta from drag start
+                    // Calculate angle delta from last position
                     let angleDelta = angle - this.dragStartAngle;
 
                     // Normalize delta to handle wrap-around
                     if (angleDelta > 180) angleDelta -= 360;
                     if (angleDelta < -180) angleDelta += 360;
 
-                    // Apply sensitivity: 0.3 = slower/more precise control
-                    const sensitivity = 0.3;
-                    const adjustedDelta = angleDelta * sensitivity;
+                    // Track total movement (15 minutes = 15/1440 * 360 = 3.75 degrees)
+                    const threshold = 3.75;
 
-                    if (this.dragging === 'start') {
-                        this.startAngle = this.dragStartValue + adjustedDelta;
-                    } else if (this.dragging === 'end') {
-                        this.endAngle = this.dragStartValue + adjustedDelta;
+                    // Apply sensitivity based on total movement
+                    let newAngle;
+                    if (Math.abs(this.totalDragDelta) < threshold) {
+                        // Slow mode: 0.3 sensitivity for fine control
+                        const sensitivity = 0.3;
+                        const adjustedDelta = angleDelta * sensitivity;
+                        this.totalDragDelta += adjustedDelta;
+
+                        if (this.dragging === 'start') {
+                            this.startAngle = this.dragStartValue + adjustedDelta;
+                        } else if (this.dragging === 'end') {
+                            this.endAngle = this.dragStartValue + adjustedDelta;
+                        }
+
+                        // Update drag reference for continuous movement
+                        this.dragStartAngle = angle;
+                        this.dragStartValue = this.dragging === 'start' ? this.startAngle : this.endAngle;
+                    } else {
+                        // Fast mode: snap directly to cursor position
+                        if (this.dragging === 'start') {
+                            this.startAngle = angle;
+                        } else if (this.dragging === 'end') {
+                            this.endAngle = angle;
+                        }
                     }
-
-                    // Update drag reference for continuous movement
-                    this.dragStartAngle = angle;
-                    this.dragStartValue = this.dragging === 'start' ? this.startAngle : this.endAngle;
 
                     this.draw();
                     this.updateLabels();
@@ -699,6 +675,8 @@
                     this.dragging = null;
                     this.dragStartAngle = null;
                     this.dragStartValue = null;
+                    this.dragInitialValue = null;
+                    this.totalDragDelta = 0;
                 };
 
                 // Mouse events
